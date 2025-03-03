@@ -82,6 +82,13 @@ from bisos.common import csParam
 import collections
 ####+END:
 
+from bisos.b import cmndsSeed
+
+b.importFileAs('plantedCsu', b.cs.G.plantOfThisSeed)
+
+import sys
+
+
 """ #+begin_org
 *  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] ~csuList emacs-list Specifications~  [[elisp:(blee:org:code-block/above-run)][ /Eval Below/ ]] [[elisp:(org-cycle)][| ]]
 #+BEGIN_SRC emacs-lisp
@@ -90,15 +97,16 @@ import collections
    "bisos.b.cs.ro"
    "bisos.csPlayer.bleep"
    "bisos.sbom.sbom_csu"
+   "plantedCsu"
  ))
 #+END_SRC
 #+RESULTS:
-| bisos.b.cs.ro | bisos.csPlayer.bleep | bisos.sbom.sbom_csu |
+| bisos.b.cs.ro | bisos.csPlayer.bleep | bisos.sbom.sbom_csu | plantedCsu |
 #+end_org """
 
 ####+BEGIN: b:py3:cs:framework/csuListProc :pyImports t :csuImports t :csuParams t
 """ #+begin_org
-*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] =Process CSU List= with /3/ in csuList pyImports=t csuImports=t csuParams=t
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] =Process CSU List= with /4/ in csuList pyImports=t csuImports=t csuParams=t
 #+end_org """
 
 from bisos.b.cs import ro
@@ -106,7 +114,7 @@ from bisos.csPlayer import bleep
 from bisos.sbom import sbom_csu
 
 
-csuList = [ 'bisos.b.cs.ro', 'bisos.csPlayer.bleep', 'bisos.sbom.sbom_csu', ]
+csuList = [ 'bisos.b.cs.ro', 'bisos.csPlayer.bleep', 'bisos.sbom.sbom_csu', 'plantedCsu', ]
 
 g_importedCmndsModules = cs.csuList_importedModules(csuList)
 
@@ -170,6 +178,15 @@ class examples(cs.Cmnd):
 
         sbom_csu.examples_csu()
 
+        examplesFuncsList = cmndsSeed.cmndsSeedInfo.examplesFuncsList
+        if examplesFuncsList is not None:
+            for each in examplesFuncsList:
+                each()
+        else:
+            examplesCsu = cmndsSeed.examplesOfPlantedCsu()
+            if examplesCsu is not None:
+                examplesCsu()
+
         # NOTYET
         print(f"Planted with SEED={__file__}")
 
@@ -183,17 +200,19 @@ class examples(cs.Cmnd):
 #+end_org """
 ####+END:
 
-####+BEGIN: b:py3:cs:framework/main :isSeed t :csInfo "csInfo" :noCmndEntry "examples" :extraParamsHook "g_extraParams" :importedCmndsModules "g_importedCmndsModules"
+# :isSeed t
+####+BEGIN: b:py3:cs:framework/main :csInfo "csInfo" :noCmndEntry "examples" :extraParamsHook "g_extraParams" :importedCmndsModules "g_importedCmndsModules"
 """ #+begin_org
 *  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] =g_csMain= (csInfo, _examples_, g_extraParams, g_importedCmndsModules)
 #+end_org """
 
-cs.main.g_csMain(
+if __name__ == '__main__':
+    cs.main.g_csMain(
         csInfo=csInfo,
         noCmndEntry=examples,  # specify a Cmnd name
         extraParamsHook=g_extraParams,
         importedCmndsModules=g_importedCmndsModules,
-)
+    )
 
 ####+END:
 
