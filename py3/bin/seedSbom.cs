@@ -2,18 +2,18 @@
 # -*- coding: utf-8 -*-
 
 """ #+begin_org
-* ~[Summary]~ :: A =CmndSvc= for running the equivalent of facter in py and remotely with rpyc.
+* ~[Summary]~ :: A =CmndSvc= for
 #+end_org """
 
-####+BEGIN: b:py3:cs:file/dblockControls :classification "cs-mu"
+####+BEGIN: b:py3:cs:file/dblockControls :classification "cs-u"
 """ #+begin_org
-* [[elisp:(org-cycle)][| /Control Parameters Of This File/ |]] :: dblk ctrls classifications=cs-mu
+* [[elisp:(org-cycle)][| /Control Parameters Of This File/ |]] :: dblk ctrls classifications=cs-u
 #+BEGIN_SRC emacs-lisp
 (setq-local b:dblockControls t) ; (setq-local b:dblockControls nil)
-(put 'b:dblockControls 'py3:cs:Classification "cs-mu") ; one of cs-mu, cs-u, cs-lib, bpf-lib, pyLibPure
+(put 'b:dblockControls 'py3:cs:Classification "cs-u") ; one of cs-mu, cs-u, cs-lib, bpf-lib, pyLibPure
 #+END_SRC
 #+RESULTS:
-: cs-mu
+: cs-u
 #+end_org """
 ####+END:
 
@@ -29,7 +29,7 @@
 ####+BEGIN: b:prog:file/particulars :authors ("./inserts/authors-mb.org")
 """ #+begin_org
 * *[[elisp:(org-cycle)][| Particulars |]]* :: Authors, version
-** This File: /bisos/git/bxRepos/bisos-pip/facter/py3/bin/roPerf-facter.cs
+** This File: /bisos/git/bxRepos/bisos-pip/sbom/py3/bin/seedSbom.cs
 ** Authors: Mohsen BANAN, http://mohsen.banan.1.byname.net/contact
 #+end_org """
 ####+END:
@@ -39,23 +39,21 @@
 * *[[elisp:(org-cycle)][| Particulars-csInfo |]]*
 #+end_org """
 import typing
-csInfo: typing.Dict[str, typing.Any] = { 'moduleName': ['roPerf-facter'], }
-csInfo['version'] = '202403273209'
+csInfo: typing.Dict[str, typing.Any] = { 'moduleName': ['seedSbom'], }
+csInfo['version'] = '202409222227'
 csInfo['status']  = 'inUse'
-csInfo['panel'] = 'roPerf-facter-Panel.org'
+csInfo['panel'] = 'seedSbom-Panel.org'
 csInfo['groupingType'] = 'IcmGroupingType-pkged'
 csInfo['cmndParts'] = 'IcmCmndParts[common] IcmCmndParts[param]'
 ####+END:
 
 """ #+begin_org
-* [[elisp:(org-cycle)][| ~Description~ |]] :: [[file:/bisos/git/auth/bxRepos/blee-binders/bisos-core/PyFwrk/bisos-pip/bisos.cs/_nodeBase_/fullUsagePanel-en.org][BISOS CmndSvcs Panel]]   [[elisp:(org-cycle)][| ]]
-
-This a =CmndSvc= for running the equivalent of facter in py and remotely with rpyc.
-With BISOS, it is used in CMDB remotely.
-
+* [[elisp:(org-cycle)][| ~Description~ |]] :: [[file:/bisos/git/auth/bxRepos/blee-binders/bisos-core/COMEEGA/_nodeBase_/fullUsagePanel-en.org][BISOS COMEEGA Panel]]
+Module description comes here.
+** Relevant Panels:
 ** Status: In use with BISOS
 ** /[[elisp:(org-cycle)][| Planned Improvements |]]/ :
-*** TODO Convert all ICMs to CSs
+*** TODO complete fileName in particulars.
 #+end_org """
 
 ####+BEGIN: b:prog:file/orgTopControls :outLevel 1
@@ -74,7 +72,7 @@ With BISOS, it is used in CMDB remotely.
 
 ####+BEGIN: b:py3:cs:framework/imports :basedOn "classification"
 """ #+begin_org
-*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] *Imports* =Based on Classification=cs-mu=
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] *Imports* =Based on Classification=cs-u=
 #+end_org """
 from bisos import b
 from bisos.b import cs
@@ -84,8 +82,6 @@ from bisos.common import csParam
 import collections
 ####+END:
 
-
-
 """ #+begin_org
 *  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] ~csuList emacs-list Specifications~  [[elisp:(blee:org:code-block/above-run)][ /Eval Below/ ]] [[elisp:(org-cycle)][| ]]
 #+BEGIN_SRC emacs-lisp
@@ -93,26 +89,24 @@ import collections
   (list
    "bisos.b.cs.ro"
    "bisos.csPlayer.bleep"
-   "bisos.facter.facter_csu"
-   "bisos.banna.bannaPortNu"
+   "bisos.sbom.sbom_csu"
  ))
 #+END_SRC
 #+RESULTS:
-| bisos.b.cs.ro | bisos.csPlayer.bleep | bisos.facter.facter_csu | bisos.banna.bannaPortNu |
+| bisos.b.cs.ro | bisos.csPlayer.bleep | bisos.sbom.sbom_csu |
 #+end_org """
 
-####+BEGIN: b:py3:cs:framework/csuListProc :pyImports t :csuImports t :csuParams t :csmuParams nil
+####+BEGIN: b:py3:cs:framework/csuListProc :pyImports t :csuImports t :csuParams t
 """ #+begin_org
-*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] =Process CSU List= with /4/ in csuList pyImports=t csuImports=t csuParams=t
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] =Process CSU List= with /3/ in csuList pyImports=t csuImports=t csuParams=t
 #+end_org """
 
 from bisos.b.cs import ro
 from bisos.csPlayer import bleep
-from bisos.facter import facter_csu
-from bisos.banna import bannaPortNu
+from bisos.sbom import sbom_csu
 
 
-csuList = [ 'bisos.b.cs.ro', 'bisos.csPlayer.bleep', 'bisos.facter.facter_csu', 'bisos.banna.bannaPortNu', ]
+csuList = [ 'bisos.b.cs.ro', 'bisos.csPlayer.bleep', 'bisos.sbom.sbom_csu', ]
 
 g_importedCmndsModules = cs.csuList_importedModules(csuList)
 
@@ -138,9 +132,9 @@ cs.invOutcomeReportControl(cmnd=True, ro=True)
 #+end_org """
 ####+END:
 
-####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "examples" :extent "verify" :ro "noCli" :comment "FrameWrk: CS-Main-Examples" :parsMand "" :parsOpt "" :argsMin 0 :argsMax 0 :pyInv ""
+####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "examples" :extent "verify" :ro "noCli" :comment "FrameWrk: CS-Main-Examples" :parsMand "" :parsOpt "" :argsMin "0" :argsMax "0" :asFunc "" :interactiveP ""
 """ #+begin_org
-*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<examples>>  *FrameWrk: CS-Main-Examples*  =verify= ro=noCli   [[elisp:(org-cycle)][| ]]
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<examples>>  *FrameWrk: CS-Main-Examples*  =verify= argsMin=0 argsMax=0 ro=noCli   [[elisp:(org-cycle)][| ]]
 #+end_org """
 class examples(cs.Cmnd):
     cmndParamsMandatory = [ ]
@@ -152,82 +146,54 @@ class examples(cs.Cmnd):
     def cmnd(self,
              rtInv: cs.RtInvoker,
              cmndOutcome: b.op.Outcome,
-    ) -> b.op.Outcome:
-        """FrameWrk: CS-Main-Examples"""
-        failed = b_io.eh.badOutcome
-        callParamsDict = {}
-        if self.invocationValidate(rtInv, cmndOutcome, callParamsDict, None).isProblematic():
-            return failed(cmndOutcome)
-####+END:
-        self.cmndDocStr(f""" #+begin_org
-***** [[elisp:(org-cycle)][| *CmndDesc:* | ]]  Conventional top level example.
-        #+end_org """)
-
-        cs.examples.myName(cs.G.icmMyName(), cs.G.icmMyFullName())
-        #cs.examples.commonBrief(excludeRoExamples=False)
-        cs.examples.commonBrief()
-
-        if ro.csMuIsPerformer() is True:
-            facter_csu.roPerf_examples_csu().pyCmnd(sectionTitle="default")
-        elif ro.csMuIsInvoker() is True:
-            facter_csu.roInv_examples_csu().pyCmnd(sectionTitle="default")
-        elif ro.csMuIsDirect() is True:
-            bleep.examples_csBasic()
-            facter_csu.examples_csu().pyCmnd()
-        else:
-            b_io.eh.critical_oops()
-
-        return(cmndOutcome)
-
-####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "noCmndProcessor" :comment "" :parsMand "" :parsOpt "" :argsMin 0 :argsMax 9999 :pyInv ""
-""" #+begin_org
-*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<noCmndProcessor>>  =verify= argsMax=9999 ro=cli   [[elisp:(org-cycle)][| ]]
-#+end_org """
-class noCmndProcessor(cs.Cmnd):
-    cmndParamsMandatory = [ ]
-    cmndParamsOptional = [ ]
-    cmndArgsLen = {'Min': 0, 'Max': 9999,}
-
-    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
-    def cmnd(self,
-             rtInv: cs.RtInvoker,
-             cmndOutcome: b.op.Outcome,
              argsList: typing.Optional[list[str]]=None,  # CsArgs
     ) -> b.op.Outcome:
-
+        """FrameWrk: CS-Main-Examples"""
         failed = b_io.eh.badOutcome
         callParamsDict = {}
         if self.invocationValidate(rtInv, cmndOutcome, callParamsDict, argsList).isProblematic():
             return failed(cmndOutcome)
         cmndArgsSpecDict = self.cmndArgsSpec()
 ####+END:
-        cmndOutcome = self.getOpOutcome()
-        if argsList:
-            facter_csu.factName().pyWCmnd(cmndOutcome, argsList=argsList)
-            print(cmndOutcome.results)
-        else:
-            examples().pyWCmnd(cmndOutcome,)
+        self.cmndDocStr(f""" #+begin_org ***** [[elisp:(org-cycle)][| *CmndDesc:* | ]]  Conventional top level example.
+        #+end_org """)
+
+        # od = collections.OrderedDict
+        # cmnd = cs.examples.cmndEnter
+        # literal = cs.examples.execInsert
+
+        cs.examples.myName(cs.G.icmMyName(), cs.G.icmMyFullName())
+
+        cs.examples.commonBrief()
+
+        bleep.examples_csBasic()
+
+        sbom_csu.examples_csu()
+
+        # NOTYET
+        print(f"Planted with SEED={__file__}")
+
+        b.ignore(ro.__doc__,  cmndArgsSpecDict)  # We are not using these modules, but they are auto imported.
 
         return(cmndOutcome)
 
-####+BEGIN: blee:bxPanel:foldingSection :outLevel 0 :sep nil :title "Main" :anchor ""  :extraInfo "Framework DBlock"
+####+BEGIN: blee:bxPanel:foldingSection :outLevel 0 :sep nil :title "Main" :anchor ""  :extraInfo "Framework Dblock"
 """ #+begin_org
-*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*     [[elisp:(outline-show-subtree+toggle)][| _Main_: |]]  Framework DBlock  [[elisp:(org-shifttab)][<)]] E|
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*     [[elisp:(outline-show-subtree+toggle)][| _Main_: |]]  Framework Dblock  [[elisp:(org-shifttab)][<)]] E|
 #+end_org """
 ####+END:
 
-####+BEGIN: b:py3:cs:framework/main :csInfo "csInfo" :noCmndEntry "noCmndProcessor" :extraParamsHook "g_extraParams" :importedCmndsModules "g_importedCmndsModules"
+####+BEGIN: b:py3:cs:framework/main :isSeed t :csInfo "csInfo" :noCmndEntry "examples" :extraParamsHook "g_extraParams" :importedCmndsModules "g_importedCmndsModules"
 """ #+begin_org
-*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] =g_csMain= (csInfo, _noCmndProcessor_, g_extraParams, g_importedCmndsModules)
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CsFrmWrk   [[elisp:(outline-show-subtree+toggle)][||]] =g_csMain= (csInfo, _examples_, g_extraParams, g_importedCmndsModules)
 #+end_org """
 
-if __name__ == '__main__':
-    cs.main.g_csMain(
+cs.main.g_csMain(
         csInfo=csInfo,
-        noCmndEntry=noCmndProcessor,  # specify a Cmnd name
+        noCmndEntry=examples,  # specify a Cmnd name
         extraParamsHook=g_extraParams,
         importedCmndsModules=g_importedCmndsModules,
-    )
+)
 
 ####+END:
 
