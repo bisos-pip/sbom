@@ -407,12 +407,7 @@ def atexit_plantWithWhich(
 ** [[elisp:(org-cycle)][| *DocStr | ] shim over b.importFile.plantWithWhich
     #+end_org """
 
-    if asExpected != "seedSbom.cs":
-        b_io.pr(f"plantWithWhich Expected seedSbom.cs Got: {asExpected}")
-        return
-
-    b.importFile.plantWithWhich('seedSbom.cs')
-
+    plantWithWhich('seedSbom.cs')
 
 
 ####+BEGIN: b:py3:cs:framework/endOfFile :basedOn "classification"
