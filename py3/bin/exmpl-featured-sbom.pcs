@@ -16,10 +16,25 @@ import typing
 from bisos.sbom import pkgsSeed
 ap = pkgsSeed.aptPkg
 pp = pkgsSeed.pipPkg
+sbom = pkgsSeed.sbomSpec
+
+def ghAptSource():
+    outcome =  b.subProc.WOpW(invedBy=None, log=1).bash(
+        f"""
+(type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y)) \
+	&& sudo mkdir -p -m 755 /etc/apt/keyrings \
+	&& wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+	&& sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+	&& sudo apt update \
+	&& sudo apt install gh -y
+""")
+
 
 aptPkgsList = [
     ap("djbdns"),
     ap("facter"),
+    ap("gh", func=ghAptSource),   # Github API Cli -- taken from https://github.com/cli/cli/blob/trunk/docs/install_linux.md
 ]
 
 pipPkgsList = [
@@ -30,10 +45,17 @@ pipxPkgsList = [
     pp("bisos.marmee"),
 ]
 
+sbomsList = [
+    sbom("exmpl-sbom.pcs"),
+]
+
+
 pkgsSeed.setup(
     aptPkgsList=aptPkgsList,
     pipPkgsList=pipPkgsList,
     pipxPkgsList=pipxPkgsList,
+    sbomsList=sbomsList,
+
 )
 
 ####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "cmndWithArgs" :extent "verify" :comment "stdin as input" :parsMand "" :parsOpt "" :argsMin 1 :argsMax 9999 :pyInv "methodInvokeArg"
@@ -142,11 +164,3 @@ def examples_csu() -> None:
 
     cmnd('cmndWithArgs', wrapper=csWrapper, args=cmndArgs, comment=" # Both stdin and args are used")
 
-
-
-# cmndsSeed.register(
-#     commonParamsFuncs=[commonParamsSpecify,],
-#     examplesFuncsList=[examples_csu,],
-# )
-
-# cmndsSeed.plantWithWhich("seedCmnds.cs")

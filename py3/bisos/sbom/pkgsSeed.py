@@ -166,6 +166,30 @@ class PipPkg(object):
     def ver(self, value: str | None,):
         self._ver = value
 
+####+BEGIN: b:py3:class/decl :className "SbomSpec" :superClass "object" :comment "Abstraction of a " :classType "basic"
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  Cls-basic  [[elisp:(outline-show-subtree+toggle)][||]] /SbomSpec/  superClass=object =Abstraction of a =  [[elisp:(org-cycle)][| ]]
+#+end_org """
+class SbomSpec(object):
+####+END:
+    """
+** Abstraction of
+"""
+    def __init__(
+            self,
+            name: str | None =None,
+    ):
+        self._sbomSpecName = name
+
+    @property
+    def name(self) -> str | None:
+        return self._sbomSpecName
+
+    @name.setter
+    def name(self, value: str | None,):
+        self._sbomSpecName = value
+
+
 
 ####+BEGIN: b:py3:class/decl :className "PkgsSeedInfo" :superClass "object" :comment "Abstraction of a  Interface" :classType "basic"
 """ #+begin_org
@@ -191,11 +215,13 @@ class PkgsSeedInfo(object):
             aptPkgsList: list[AptPkg] | None =None,
             pipPkgsList: list[PipPkg] | None =None,
             pipxPkgsList: list[PipPkg] | None =None,
+            sbomsList: list[SbomSpec] | None =None,
             examplesHook: typing.Callable | None =None,
     ):
         self._aptPkgsList = aptPkgsList
         self._pipPkgsList = pipPkgsList
         self._pipxPkgsList = pipPkgsList
+        self._sbomsList = sbomsList
         self._examplesHook = examplesHook
 
     @property
@@ -230,6 +256,13 @@ class PkgsSeedInfo(object):
     def pipxPkgsList(self, value: list[PipPkg] | None,):
         self._pipxPkgsList = value
 
+    @property
+    def sbomsList(self) -> list[SbomSpec] | None:
+        return self._sbomsList
+
+    @sbomsList.setter
+    def sbomsList(self, value: list[SbomSpec] | None,):
+        self._sbomsList = value
 
     @property
     def examplesHook(self) -> typing.Callable | None:
@@ -310,6 +343,29 @@ class PkgsSeedInfo(object):
 
         return result
 
+    def sbomSpecsNames(self,) -> list[str]:
+        result: list[str] = []
+        if self.sbomsList is None:
+            return result
+        for eachSpec in self.sbomsList:
+            if eachSpec.name is None:
+                continue
+            result.append(eachSpec.name)
+        return result
+
+    def namedSbomSpec(self, name: str) -> SbomSpec | None:
+        result: SbomSpec | None = None
+        if self.sbomsList is None:
+            return result
+        for eachSpec in self.sbomsList:
+            if eachSpec.name is None:
+                continue
+            elif eachSpec.name == name:
+                result = eachSpec
+            else:
+                continue
+        return result
+
 
 pkgsSeedInfo = PkgsSeedInfo()
 
@@ -354,6 +410,22 @@ def pipPkg(
     pkg = PipPkg(name=pkgName, ver=ver)
     return pkg
 
+####+BEGIN: b:py3:cs:func/typing :funcName "sbomSpec" :funcType "extTyped" :deco "track"
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  F-T-extTyped [[elisp:(outline-show-subtree+toggle)][||]] /sbomSpec/  deco=track  [[elisp:(org-cycle)][| ]]
+#+end_org """
+@cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+def sbomSpec(
+####+END:
+        sbomName: str,
+) -> SbomSpec:
+    """ #+begin_org
+** [[elisp:(org-cycle)][| *DocStr | ] Factory function to create a SbomSpec instance
+    #+end_org """
+
+    spec = SbomSpec(name=sbomName)
+    return spec
+
 ####+BEGIN: b:py3:cs:func/typing :funcName "setup" :funcType "extTyped" :deco "track"
 """ #+begin_org
 *  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  F-T-extTyped [[elisp:(outline-show-subtree+toggle)][||]] /setup/  deco=track  [[elisp:(org-cycle)][| ]]
@@ -364,6 +436,7 @@ def setup(
         aptPkgsList: list[AptPkg] | None = None,
         pipPkgsList: list[PipPkg] | None = None,
         pipxPkgsList: list[PipPkg] | None = None,
+        sbomsList: list[SbomSpec] | None = None,
         examplesHook: typing.Callable | None = None,
 ):
     """ #+begin_org
@@ -372,6 +445,7 @@ def setup(
     pkgsSeedInfo.aptPkgsList  = aptPkgsList
     pkgsSeedInfo.pipPkgsList  = pipPkgsList
     pkgsSeedInfo.pipxPkgsList  = pipxPkgsList
+    pkgsSeedInfo.sbomsList  = sbomsList
     pkgsSeedInfo.examplesHook  = examplesHook
 
 

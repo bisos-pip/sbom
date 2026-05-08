@@ -142,9 +142,20 @@ def examples_csu(
         cmnd('pipxPkgs_update', args="all", comment=f" # Install or Update spec pipxPkgs")
         cmnd('pipxPkgs_update', args=f"{' '.join(pipxPkgsNames)}", comment=f" # List specified pipxPkgs")
 
-    cs.examples.menuChapter(f'=Full Update -- Apt, Pip and  Pipx=')
+    sbomSpecsNames = pkgsSeed.pkgsSeedInfo.sbomSpecsNames()
+    if len(sbomSpecsNames) != 0:
+        cs.examples.menuChapter(f'=SBOM Specs {sbomSpecsNames}=')
 
-    cmnd('sbom_fullUpdate', comment=f" # Apt, Pip and  Pipx")
+        cmnd('sbomSpecs_list', comment=f" # List specified sbomSpecs")
+
+        cmnd('sbomSpec_process', args=f"{sbomSpecsNames[0]}", comment=f" # Process the specified sbomSpec")
+
+        cmnd('sbomSpecs_fullUpdate', args="all", comment=f" # Process all sbomSpecs")
+        cmnd('sbomSpecs_fullUpdate', args=f"{' '.join(sbomSpecsNames)}", comment=f" # Process specified sbomSpecs")
+
+    cs.examples.menuChapter(f'=Full Update -- Apt, Pip, Pipx and Sboms=')
+
+    cmnd('sbom_fullUpdate', comment=f" # Apt, Pip, Pipx and Sboms")
 
 
     # literal("hostname --fqdn", comment=" # usually used as control/me")
@@ -196,6 +207,9 @@ class sbom_fullUpdate(cs.Cmnd):
                                   ).isProblematic():
             return(b_io.eh.badOutcome(cmndOutcome))
         if pipxPkgs_update().pyCmnd(cmndOutcome=cmndOutcome, argsList=["all"]
+                                  ).isProblematic():
+            return(b_io.eh.badOutcome(cmndOutcome))
+        if sbomSpecs_fullUpdate().pyCmnd(cmndOutcome=cmndOutcome, argsList=["all"]
                                   ).isProblematic():
             return(b_io.eh.badOutcome(cmndOutcome))
 
@@ -363,7 +377,7 @@ class aptPkgs_update(cs.Cmnd):
                     continue
                 if aptPkg.func is None:
                     if b.subProc.WOpW(invedBy=self, log=1).bash(
-                            f'''sudo apt-get install {each}''',
+                            f'''sudo DEBIAN_FRONTEND=noninteractive apt-get -y install {each}''',
                     ).isProblematic():
                         pass
                         # return(b_io.eh.badOutcome(cmndOutcome))
@@ -743,6 +757,171 @@ class pipxPkgs_update(cs.Cmnd):
             argDefault='',
             argChoices=[],
             argDescription="List of  pkgsNames"
+        )
+        return cmndArgsSpecDict
+
+
+####+BEGIN: bx:icm:py3:section :title "CS-Commands --- SBOM Specs"
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  /Section/    [[elisp:(outline-show-subtree+toggle)][||]] *CS-Commands --- SBOM Specs*  [[elisp:(org-cycle)][| ]]
+#+end_org """
+####+END:
+
+####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "sbomSpecs_list" :comment "" :extent "verify" :ro "cli" :parsMand "" :parsOpt "" :argsMin 0 :argsMax 0 :pyInv ""
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<sbomSpecs_list>>  =verify= ro=cli   [[elisp:(org-cycle)][| ]]
+#+end_org """
+class sbomSpecs_list(cs.Cmnd):
+    cmndParamsMandatory = [ ]
+    cmndParamsOptional = [ ]
+    cmndArgsLen = {'Min': 0, 'Max': 0,}
+
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmnd(self,
+             rtInv: cs.RtInvoker,
+             cmndOutcome: b.op.Outcome,
+    ) -> b.op.Outcome:
+
+        failed = b_io.eh.badOutcome
+        callParamsDict = {}
+        if self.invocationValidate(rtInv, cmndOutcome, callParamsDict, None).isProblematic():
+            return failed(cmndOutcome)
+####+END:
+        if self.cmndDocStr(f""" #+begin_org
+** [[elisp:(org-cycle)][| *CmndDesc:* | ]]  List all SBOM specifications.
+        #+end_org """): return(cmndOutcome)
+
+        if pkgsSeed.pkgsSeedInfo.sbomsList is not None:
+            for eachSpec in pkgsSeed.pkgsSeedInfo.sbomsList:
+                print(f"sbomName = {eachSpec.name}")
+        else:
+            print("Empty SBOM Specs List")
+
+        return cmndOutcome.set(opResults=pkgsSeed.pkgsSeedInfo.sbomSpecsNames())
+
+
+####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "sbomSpec_process" :comment "" :extent "verify" :ro "cli" :parsMand "" :parsOpt "" :argsMin 1 :argsMax 1 :pyInv ""
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<sbomSpec_process>>  =verify= argsMin=1 argsMax=1 ro=cli   [[elisp:(org-cycle)][| ]]
+#+end_org """
+class sbomSpec_process(cs.Cmnd):
+    cmndParamsMandatory = [ ]
+    cmndParamsOptional = [ ]
+    cmndArgsLen = {'Min': 1, 'Max': 1,}
+
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmnd(self,
+             rtInv: cs.RtInvoker,
+             cmndOutcome: b.op.Outcome,
+             argsList: typing.Optional[list[str]]=None,  # CsArgs
+    ) -> b.op.Outcome:
+
+        failed = b_io.eh.badOutcome
+        callParamsDict = {}
+        if self.invocationValidate(rtInv, cmndOutcome, callParamsDict, argsList).isProblematic():
+            return failed(cmndOutcome)
+        cmndArgsSpecDict = self.cmndArgsSpec()
+####+END:
+        if self.cmndDocStr(f""" #+begin_org
+** [[elisp:(org-cycle)][| *CmndDesc:* | ]]  Process a specified SBOM specification.
+        #+end_org """): return(cmndOutcome)
+
+        sbomName = self.cmndArgsGet("0&1", cmndArgsSpecDict, argsList)
+
+        sbomSpec = pkgsSeed.pkgsSeedInfo.namedSbomSpec(sbomName[0])
+        if sbomSpec is None:
+            b_io.eh.problem_usageError(f"SBOM Spec not found: {sbomName[0]}")
+            return(b_io.eh.badOutcome(cmndOutcome))
+
+        print(f"Processing SBOM Spec: {sbomSpec.name}")
+
+        if b.subProc.WOpW(invedBy=self, log=1).bash(
+               f'''{sbomSpec.name} -i sbom_fullUpdate''',
+        ).isProblematic():
+            return(b_io.eh.badOutcome(cmndOutcome))
+
+        return cmndOutcome.set(opResults=sbomSpec.name)
+
+####+BEGIN: b:py3:cs:method/args :methodName "cmndArgsSpec" :methodType "anyOrNone" :retType "bool" :deco "default" :argsList "self"
+    """ #+begin_org
+**  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  Mtd-T-anyOrNone [[elisp:(outline-show-subtree+toggle)][||]] /cmndArgsSpec/ deco=default  deco=default  [[elisp:(org-cycle)][| ]]
+    #+end_org """
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmndArgsSpec(self, ):
+####+END:
+        """
+***** Cmnd Args Specification
+"""
+        cmndArgsSpecDict = cs.CmndArgsSpecDict()
+        cmndArgsSpecDict.argsDictAdd(
+            argPosition="0&1",
+            argName="sbomName",
+            argDefault='',
+            argChoices=[],
+            argDescription="One argument, any string as a sbomName"
+        )
+        return cmndArgsSpecDict
+
+
+####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "sbomSpecs_fullUpdate" :comment "" :extent "verify" :ro "cli" :parsMand "" :parsOpt "" :argsMin 1 :argsMax 9999 :pyInv ""
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<sbomSpecs_fullUpdate>>  =verify= argsMin=1 argsMax=9999 ro=cli   [[elisp:(org-cycle)][| ]]
+#+end_org """
+class sbomSpecs_fullUpdate(cs.Cmnd):
+    cmndParamsMandatory = [ ]
+    cmndParamsOptional = [ ]
+    cmndArgsLen = {'Min': 1, 'Max': 9999,}
+
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmnd(self,
+             rtInv: cs.RtInvoker,
+             cmndOutcome: b.op.Outcome,
+             argsList: typing.Optional[list[str]]=None,  # CsArgs
+    ) -> b.op.Outcome:
+
+        failed = b_io.eh.badOutcome
+        callParamsDict = {}
+        if self.invocationValidate(rtInv, cmndOutcome, callParamsDict, argsList).isProblematic():
+            return failed(cmndOutcome)
+        cmndArgsSpecDict = self.cmndArgsSpec()
+####+END:
+        if self.cmndDocStr(f""" #+begin_org
+** [[elisp:(org-cycle)][| *CmndDesc:* | ]]  Process all or specified SBOM specifications.
+        #+end_org """): return(cmndOutcome)
+
+        cmndArgsSpecDict = self.cmndArgsSpec()
+        cmndArgs = self.cmndArgsGet("0&9999", cmndArgsSpecDict, argsList)
+
+        if cmndArgs[0] == "all":
+            cmndArgs = pkgsSeed.pkgsSeedInfo.sbomSpecsNames()
+
+        for each in cmndArgs:
+            sbomSpec = pkgsSeed.pkgsSeedInfo.namedSbomSpec(each)
+            if sbomSpec is None:
+                b_io.eh.problem_usageError(f"SBOM Spec not found: {each}")
+                continue
+            if sbomSpec_process().pyCmnd(cmndOutcome=cmndOutcome, argsList=[f"{each}"]).isProblematic():
+                b_io.eh.problem_usageError(f"sbomSpec_process {each}")
+
+        return(cmndOutcome.set(opResults=None))
+
+####+BEGIN: b:py3:cs:method/args :methodName "cmndArgsSpec" :methodType "anyOrNone" :retType "bool" :deco "default" :argsList "self"
+    """ #+begin_org
+**  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  Mtd-T-anyOrNone [[elisp:(outline-show-subtree+toggle)][||]] /cmndArgsSpec/ deco=default  deco=default  [[elisp:(org-cycle)][| ]]
+    #+end_org """
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmndArgsSpec(self, ):
+####+END:
+        """
+***** Cmnd Args Specification
+"""
+        cmndArgsSpecDict = cs.CmndArgsSpecDict()
+        cmndArgsSpecDict.argsDictAdd(
+            argPosition="0&9999",
+            argName="cmndArgs",
+            argDefault='',
+            argChoices=[],
+            argDescription="List of sbomNames or 'all'"
         )
         return cmndArgsSpecDict
 

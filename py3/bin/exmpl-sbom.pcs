@@ -15,11 +15,11 @@
 
 
 from bisos.sbom import pkgsSeed
+
 ap = pkgsSeed.aptPkg
 pp = pkgsSeed.pipPkg
 
 aptPkgsList = [
-    ap("djbdns"),
     ap("facter"),
 ]
 
@@ -36,5 +36,3 @@ pkgsSeed.setup(
     pipPkgsList=pipPkgsList,
     pipxPkgsList=pipxPkgsList,
 )
-
-# pkgsSeed.plantWithWhich("seedSbom.cs")
