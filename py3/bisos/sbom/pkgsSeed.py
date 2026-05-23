@@ -145,9 +145,11 @@ class PipPkg(object):
     def __init__(
             self,
             name: str | None =None,
+            func: typing.Callable | None =None,
             ver: str | None =None,
     ):
         self._pipPkgName = name
+        self._pipPkgFunc = func
         self._ver = ver
 
     @property
@@ -157,6 +159,14 @@ class PipPkg(object):
     @name.setter
     def name(self, value: str | None,):
         self._pipPkgName = value
+
+    @property
+    def func(self) -> typing.Callable | None:
+        return self._pipPkgFunc
+
+    @func.setter
+    def func(self, value: typing.Callable | None,):
+        self._pipPkgFunc = value
 
     @property
     def ver(self) -> str | None:
@@ -401,13 +411,14 @@ def aptPkg(
 def pipPkg(
 ####+END:
         pkgName: str,
+        func: typing.Callable | None = None,
         ver: str | None = None,
 ) -> PipPkg:
     """ #+begin_org
 ** [[elisp:(org-cycle)][| *DocStr | ]
     #+end_org """
 
-    pkg = PipPkg(name=pkgName, ver=ver)
+    pkg = PipPkg(name=pkgName, func=func, ver=ver)
     return pkg
 
 ####+BEGIN: b:py3:cs:func/typing :funcName "sbomSpec" :funcType "extTyped" :deco "track"

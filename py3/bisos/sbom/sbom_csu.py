@@ -556,10 +556,13 @@ class pipPkgs_update(cs.Cmnd):
                 if pipPkg is None:
                     b_io.eh.problem_usageError(f"{each}")
                     continue
-                if b.subProc.WOpW(invedBy=self, log=1).bash(
-                        f'''pip install {each}''',
-                ).isProblematic():
-                    b_io.eh.problem_usageError(f"{each}")
+                if pipPkg.func is None:
+                    if b.subProc.WOpW(invedBy=self, log=1).bash(
+                            f'''pip install {each}''',
+                    ).isProblematic():
+                        b_io.eh.problem_usageError(f"{each}")
+                else:
+                    pipPkg.func()
 
         return(cmndOutcome.set(opResults=None))
 
