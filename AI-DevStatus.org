@@ -1,15 +1,222 @@
 #+title: Development Status & Continuation Handoff
+#+DATE: <2026-08-25 Tue>
 #+TAGS: me(m) ai(a)
 
 This file is a working-state handoff so development can continue on another
 machine (which has this repo but NOT the developer's =~=). It captures the
 architecture, what works, what is untested and the design decisions made so far.
 
-This file is to be maintained by Claude. When a release is being made, claude should be
-prompted to update this document.
+This file is to be maintained by Claude/Copilot. When a release is being made,
+the agent should be prompted to update this document.
 
-Companion docs: [[file:AI-AGENTS.org][AI-AGENTS.org]] (agent guidance / layering), [[file:README.org][README.org]] (overview).
+Companion docs: [[file:AI-AGENTS.org][AI-AGENTS.org]] (agent guidance / layering), [[file:README.org][README.org]] (overview),
+[[file:AI-WorkPlan.org][AI-WorkPlan.org]] (stage-by-stage TODOs).
 
+* Architecture Overview
+
+** bisos.sbom Package Structure
+#+begin_src
+py3/bisos/sbom/
+  pkgsSeed.py    -- Data model: package descriptor classes + singleton PkgsSeedInfo + factories + setup()
+  sbom_csu.py    -- CS commands: all *_list / *_isInstalled / *_update / sbom_fullUpdate
+py3/tests/
+  verify.sh      -- Smoke tests (37/37 PASS as of 2026-08-25)
+#+end_src
+
+** -sbom.pcs Convention
+A =-sbom.pcs= file is a Python script (bisos CS-Unit) that:
+1. Imports =pkgsSeed= and calls =pkgsSeed.setup(...)= to declare what to install
+2. Optionally defines a =readme= CS-command (human-readable description)
+3. Optionally defines =examples_csu()= for the example menu
+4. Is invoked as =<name>-sbom.pcs -i sbom_fullUpdate= to install everything
+
+** Package Type Shorthands (used in -sbom.pcs files)
+| Alias  | Full form           | Usage                                 |
+|--------+---------------------+---------------------------------------|
+| =ap=   | =pkgsSeed.aptPkg=   | Debian apt package                    |
+| =pp=   | =pkgsSeed.pipPkg=   | Python pip package                    |
+| =npm=  | =pkgsSeed.npmPkg=   | npm package (global or local)         |
+| =sbom= | =pkgsSeed.sbomSpec= | Inter-sbom dependency (run first)     |
+
+* Data Model: pkgsSeed.py
+
+** Classes
+| Class          | Key Attributes                   | Notes                                   |
+|----------------+----------------------------------+-----------------------------------------|
+| =AptPkg=       | =name=, =func=, =osVers=         | func() called instead of apt if set     |
+| =PipPkg=       | =name=, =func=, =ver=            | ver pins exact version                  |
+| =NpmPkg=       | =name=, =func=, =ver=, =scope=   | scope="global" (default) or "local"     |
+| =SbomSpec=     | =name=                           | path to another -sbom.pcs file          |
+| =PkgsSeedInfo= | aptPkgsList, pipPkgsList, npmPkgsList, sbomsList, virtenv | Singleton |
+
+** Factory Functions
+- =aptPkg(pkgName, func=None, osVers=None)= → AptPkg
+- =pipPkg(pkgName, func=None, ver=None)= → PipPkg
+- =npmPkg(pkgName, func=None, ver=None, scope="global")= → NpmPkg
+- =sbomSpec(sbomName)= → SbomSpec
+- =setup(aptPkgsList, pipPkgsList, pipxPkgsList, npmPkgsList, sbomsList, examplesHook, virtenv)= — populates singleton
+
+** PkgsSeedInfo Singleton
+: pkgsSeedInfo = PkgsSeedInfo()   # module-level singleton
+
+Key methods:
+- =aptPkgsNames()=, =namedAptPkg(name)=
+- =pipPkgsNames()=, =namedPipPkg(name)=
+- =npmPkgsNames()=, =namedNpmPkg(name)=
+- =sbomSpecsNames()=, =namedSbomSpec(name)=
+- =pipCmnd()= → ="pip"= or ="{virtenv}/bin/pip"=
+- =binPath(execName)= → bare name or fully-qualified virtenv path
+
+** virtenv support
+Setting =pkgsSeedInfo.virtenv = "/bisos/venv/py3/asc"= (or via =setup(virtenv=...)=)
+causes =pipCmnd()= and =binPath("pip")= to return =/bisos/venv/py3/asc/bin/pip=.
+All pip installs and checks use this path. When =virtenv=None= (default), PATH is used.
+
+* CS Commands: sbom_csu.py
+
+** Command Surface (as of 2026-08-25)
+| Command                | Args       | Description                                         |
+|------------------------+------------+-----------------------------------------------------|
+| =sbom_fullUpdate=      | —          | Run sbomSpecs first, then apt/pip/pipx/npm updates  |
+| =aptPkgs_list=         | —          | Print apt package list                              |
+| =aptPkg_isInstalled=   | pkgName    | Check via dpkg-query                                |
+| =aptPkgs_update=       | all/names  | apt install (skips if already installed)            |
+| =pipPkgs_list=         | —          | Print pip package list                              |
+| =pipPkg_isInstalled=   | pkgName    | Check via pip list                                  |
+| =pipPkgs_update=       | all/names  | pip install (skips if already installed)            |
+| =pipxPkgs_list=        | —          | Print pipx package list                             |
+| =pipxPkg_isInstalled=  | pkgName    | Check via pipx list                                 |
+| =pipxPkgs_update=      | all/names  | pipx install (skips if already installed)           |
+| =npmPkgs_list=         | —          | Print npm package list                              |
+| =npmPkg_isInstalled=   | pkgName    | =npm list --global <pkg>= (respects scope attr)     |
+| =npmPkgs_update=       | all/names  | =npm install --global <pkg>[@ver]= or func()        |
+| =sbomSpecs_list=       | —          | Print sbomSpecs list                                |
+| =sbomSpec_process=     | sbomPath   | Run another sbom's sbom_fullUpdate                  |
+| =sbomSpecs_fullUpdate= | —          | Run all sbomSpecs in order                          |
+
+** sbom_fullUpdate execution order
+1. =sbomSpecs_fullUpdate= — processes all =sbomsList= entries (inter-sbom deps)
+2. =aptPkgs_update("all")=
+3. =pipPkgs_update("all")=
+4. =pipxPkgs_update("all")=
+5. =npmPkgs_update("all")=
+
+** NpmPkg install logic (npmPkgs_update)
+- If =func= is set on the NpmPkg, call =func()= directly (custom installer)
+- Else: =npm install [--global] <pkg>[@ver]= where =--global= is added when =scope == "global"=
+- Skips install if =npmPkg_isInstalled= returns True (idempotent)
+
+* Sbom Files Created / Modified
+
+** /bisos/core/bsip/bin/nvm-sbom.pcs  [NEW]
+- Installs nvm (Node Version Manager) per-user via official curl script
+- =NVM_VERSION="v0.40.3"=; install target: =~/.nvm=
+- *Must be run as the target user (NOT root)* — nvm is per-user
+- Uses plain string literal (not f-string) for bash to avoid Python ={= =#= syntax errors
+- The nvm install script automatically appends activation lines to =~/.bashrc=
+- =aptPkgsList=: =curl= (required), =nvm= (with =func=nvmInstall=)
+- After install: =nvm install --lts && nvm use --lts && nvm alias default lts/*=
+
+** /bisos/core/bsip/bin/npm-sbom.pcs  [NEW]
+- Installs system-wide Node.js 18 + npm via Debian 12 apt (no custom source needed)
+- Packages: =nodejs= (v18 LTS from bookworm/main), =npm=
+- This is the *fallback* for non-interactive/root contexts where nvm is not activated
+- For newer Node (20, 22 LTS), prefer nvm-sbom.pcs
+
+** /bisos/asc/web/bin/reactPlus-sbom.pcs  [NEW/POPULATED]
+- React / Gatsby front-end toolchain npm packages
+- =sbomsList=:
+  #+begin_src python
+  sbomsList = [
+      sbom("/bisos/core/bsip/bin/nvm-sbom.pcs"),   # primary: nvm per-user Node version manager
+      sbom("/bisos/core/bsip/bin/npm-sbom.pcs"),    # fallback: system-wide Node 18 + npm via apt
+  ]
+  #+end_src
+- =npmPkgsList=: =gatsby-cli=, =create-react-app=, =typescript=, =eslint=, =prettier= (all scope="global")
+- Key note: global npm packages install under =~/.nvm/versions/node/<active-version>/lib/node_modules/=
+  and are *PER NVM VERSION* — re-run =sbom_fullUpdate= after =nvm install <new-version> && nvm use <new-version>=
+
+** /bisos/core/bsip/bin/ai-claude-sbom.pcs  [REWRITTEN]
+- Installs Claude Code CLI via official Anthropic apt repository
+- APT source URL: =https://downloads.claude.ai/claude-code/apt/stable=
+- GPG key fingerprint: =31DD DE24 DDFA B679 F42D 7BD2 BAA9 29FF 1A7E CACE=
+- Claude Desktop (Linux): uses community repo =pkg.claude-desktop-debian.dev=
+- Key fix: plain string (not f-string) for bash functions to avoid ={= =#= syntax errors
+- Key fix: bash =if= block required closing =fi= in =claudeDesktop()=
+
+* Smoke Tests: py3/tests/verify.sh
+
+Run from the tests directory:
+#+begin_src bash
+cd /bisos/git/auth/bxRepos/bisos-pip/sbom/py3/tests
+./verify.sh
+#+end_src
+
+** Test Coverage (37/37 PASS as of 2026-08-25)
+- =pkgsSeed= public API surface: 12 symbols (all classes, factories, singleton, utility)
+- =NpmPkg= class attributes: =name=, =ver=, =scope=, =func=; default scope="global"
+- =npmPkg()= factory: returns correct type and attributes
+- =PkgsSeedInfo= singleton identity (two instantiations return same object)
+- =setup()= round-trips for all four pkg types + sbomSpecs
+- =namedNpmPkg()= for known and unknown names
+- =virtenv= / =pipCmnd()= / =binPath()= with None and set virtenv
+- =sbom_csu= command surface: 16 commands + =examples_csu=
+- =exmpl-featured-sbom.pcs= example menu runs without error (non-invasive)
+
+* Design Decisions & Lessons Learned
+
+** f-string vs plain string for bash function bodies
+When a -sbom.pcs function embeds a bash script string that contains ={...}=
+(e.g. =${NVM_VERSION}=, =${HOME}=), do NOT use =f"..."= prefix.
+Use a plain string literal ="""..."""= to avoid Python SyntaxError
+(=f-string expression part cannot include '#'=, etc).
+
+** nvm is per-user, not system-wide
+- =npm root -g= on the development system returns =~/.nvm/versions/node/v22.21.1/lib/node_modules=
+  — this means nvm is active and system Node is actually nvm-managed
+- Global npm packages are installed per-nvm-version
+- Installing reactPlus packages with nvm active means they land in the nvm version's tree
+- After =nvm use <new-version>=, run =sbom_fullUpdate= again to re-install globals
+
+** apt-installed npm (system) vs nvm npm
+| Context                   | Which npm      | Globals land in                                          |
+|---------------------------+----------------+----------------------------------------------------------|
+| nvm active (normal user)  | nvm's npm      | =~/.nvm/versions/node/<ver>/lib/node_modules/=           |
+| nvm NOT active / root     | system apt npm | =/usr/lib/node_modules/=                                 |
+
+** Claude Desktop Linux
+The official Anthropic Claude Desktop app does not provide a native Linux .deb.
+The community package at =pkg.claude-desktop-debian.dev= provides an unofficial port.
+
+** Inter-sbom dependencies (sbomsList / sbomSpec)
+Declaring =sbomsList= in a -sbom.pcs causes =sbom_fullUpdate= to call
+=sbomSpecs_fullUpdate= first, which runs each listed sbom's =sbom_fullUpdate=
+in order. This is the standard way to express prerequisites.
+
+* Current State Summary (2026-08-25)
+
+| Item                                          | Status       |
+|-----------------------------------------------+--------------|
+| =pkgsSeed.py= NpmPkg class + factory          | ✓ Done       |
+| =pkgsSeed.py= PkgsSeedInfo npmPkgsList        | ✓ Done       |
+| =sbom_csu.py= npmPkgs_list/isInstalled/update | ✓ Done       |
+| =sbom_csu.py= sbom_fullUpdate wires npm       | ✓ Done       |
+| =verify.sh= 37/37 PASS                        | ✓ Done       |
+| =nvm-sbom.pcs= created                        | ✓ Done       |
+| =npm-sbom.pcs= created                        | ✓ Done       |
+| =ai-claude-sbom.pcs= rewritten                | ✓ Done       |
+| =reactPlus-sbom.pcs= populated                | ✓ Done       |
+| Live =sbom_fullUpdate= on target system       | ☐ Not tested |
+| =nvm-sbom.pcs= run as non-root user           | ☐ Not tested |
+| AI-WorkPlan.org Stage 2 entry written         | ☐ TODO       |
+
+* Next Steps
+
+1. *Live test* =nvm-sbom.pcs -i sbom_fullUpdate= as a non-root user to confirm nvm installs and activates correctly.
+2. *Live test* =reactPlus-sbom.pcs -i sbom_fullUpdate= after nvm is active and a Node LTS is selected.
+3. *AI-WorkPlan.org*: Add a Stage 2 entry documenting the NpmPkg implementation work done in this session.
+4. *exmpl-featured-sbom.pcs*: May want to add an npm chapter to the featured example sbom to showcase npm support in the standard example.
+5. *binPath for npm*: Consider whether =npmPkgs_update= should use =pkgsSeedInfo.binPath("npm")= instead of bare ="npm"=, to allow per-virtenv npm like pip does (currently hardcoded to bare =npm=).
 
 
 # Local Variables:
