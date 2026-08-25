@@ -176,6 +176,60 @@ class PipPkg(object):
     def ver(self, value: str | None,):
         self._ver = value
 
+
+####+BEGIN: b:py3:class/decl :className "NpmPkg" :superClass "object" :comment "Abstraction of an Npm Package" :classType "basic"
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  Cls-basic  [[elisp:(outline-show-subtree+toggle)][||]] /NpmPkg/  superClass=object =Abstraction of an Npm Package=  [[elisp:(org-cycle)][| ]]
+#+end_org """
+class NpmPkg(object):
+####+END:
+    """
+** Abstraction of an npm package (managed by npm install [-g])
+"""
+    def __init__(
+            self,
+            name: str | None =None,
+            func: typing.Callable | None =None,
+            ver: str | None =None,
+            scope: str = "global",  # "global" or "local"
+    ):
+        self._npmPkgName = name
+        self._npmPkgFunc = func
+        self._ver = ver
+        self._scope = scope
+
+    @property
+    def name(self) -> str | None:
+        return self._npmPkgName
+
+    @name.setter
+    def name(self, value: str | None,):
+        self._npmPkgName = value
+
+    @property
+    def func(self) -> typing.Callable | None:
+        return self._npmPkgFunc
+
+    @func.setter
+    def func(self, value: typing.Callable | None,):
+        self._npmPkgFunc = value
+
+    @property
+    def ver(self) -> str | None:
+        return self._ver
+
+    @ver.setter
+    def ver(self, value: str | None,):
+        self._ver = value
+
+    @property
+    def scope(self) -> str:
+        return self._scope
+
+    @scope.setter
+    def scope(self, value: str,):
+        self._scope = value
+
 ####+BEGIN: b:py3:class/decl :className "SbomSpec" :superClass "object" :comment "Abstraction of a " :classType "basic"
 """ #+begin_org
 *  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  Cls-basic  [[elisp:(outline-show-subtree+toggle)][||]] /SbomSpec/  superClass=object =Abstraction of a =  [[elisp:(org-cycle)][| ]]
@@ -225,14 +279,18 @@ class PkgsSeedInfo(object):
             aptPkgsList: list[AptPkg] | None =None,
             pipPkgsList: list[PipPkg] | None =None,
             pipxPkgsList: list[PipPkg] | None =None,
+            npmPkgsList: list[NpmPkg] | None =None,
             sbomsList: list[SbomSpec] | None =None,
             examplesHook: typing.Callable | None =None,
+            virtenv: str | None =None,
     ):
         self._aptPkgsList = aptPkgsList
         self._pipPkgsList = pipPkgsList
         self._pipxPkgsList = pipPkgsList
+        self._npmPkgsList = npmPkgsList
         self._sbomsList = sbomsList
         self._examplesHook = examplesHook
+        self._virtenv = virtenv
 
     @property
     def seedType(self) -> str | None:
@@ -267,6 +325,14 @@ class PkgsSeedInfo(object):
         self._pipxPkgsList = value
 
     @property
+    def npmPkgsList(self) -> list[NpmPkg] | None:
+        return self._npmPkgsList
+
+    @npmPkgsList.setter
+    def npmPkgsList(self, value: list[NpmPkg] | None,):
+        self._npmPkgsList = value
+
+    @property
     def sbomsList(self) -> list[SbomSpec] | None:
         return self._sbomsList
 
@@ -281,6 +347,24 @@ class PkgsSeedInfo(object):
     @examplesHook.setter
     def examplesHook(self, value: typing.Callable | None,):
         self._examplesHook = value
+
+    @property
+    def virtenv(self) -> str | None:
+        return self._virtenv
+
+    @virtenv.setter
+    def virtenv(self, value: str | None,):
+        self._virtenv = value
+
+    def pipCmnd(self,) -> str:
+        """Path to the pip to use: the virtenv's pip when set, else pip from PATH."""
+        return self.binPath("pip")
+
+    def binPath(self, execName: str,) -> str:
+        """Explicit path to execName in the virtenv's bin when set, else execName from PATH."""
+        if self.virtenv is None:
+            return execName
+        return f"{self.virtenv}/bin/{execName}"
 
     def aptPkgsNames(self,) -> list[str]:
         result: list[str] = []
@@ -353,6 +437,29 @@ class PkgsSeedInfo(object):
 
         return result
 
+    def npmPkgsNames(self,) -> list[str]:
+        result: list[str] = []
+        if self.npmPkgsList is None:
+            return result
+        for eachPkg in self.npmPkgsList:
+            if eachPkg.name is None:
+                continue
+            result.append(eachPkg.name)
+        return result
+
+    def namedNpmPkg(self, name: str) -> NpmPkg | None:
+        result: NpmPkg | None = None
+        if self.npmPkgsList is None:
+            return result
+        for eachPkg in self.npmPkgsList:
+            if eachPkg.name is None:
+                continue
+            elif eachPkg.name == name:
+                result = eachPkg
+            else:
+                continue
+        return result
+
     def sbomSpecsNames(self,) -> list[str]:
         result: list[str] = []
         if self.sbomsList is None:
@@ -421,6 +528,24 @@ def pipPkg(
     pkg = PipPkg(name=pkgName, func=func, ver=ver)
     return pkg
 
+####+BEGIN: b:py3:cs:func/typing :funcName "npmPkg" :funcType "extTyped" :deco "track"
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  F-T-extTyped [[elisp:(outline-show-subtree+toggle)][||]] /npmPkg/  deco=track  [[elisp:(org-cycle)][| ]]
+#+end_org """
+@cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+def npmPkg(
+####+END:
+        pkgName: str,
+        func: typing.Callable | None = None,
+        ver: str | None = None,
+        scope: str = "global",
+) -> NpmPkg:
+    """ #+begin_org
+** [[elisp:(org-cycle)][| *DocStr | ] Factory function to create an NpmPkg instance
+    #+end_org """
+    pkg = NpmPkg(name=pkgName, func=func, ver=ver, scope=scope)
+    return pkg
+
 ####+BEGIN: b:py3:cs:func/typing :funcName "sbomSpec" :funcType "extTyped" :deco "track"
 """ #+begin_org
 *  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  F-T-extTyped [[elisp:(outline-show-subtree+toggle)][||]] /sbomSpec/  deco=track  [[elisp:(org-cycle)][| ]]
@@ -447,8 +572,10 @@ def setup(
         aptPkgsList: list[AptPkg] | None = None,
         pipPkgsList: list[PipPkg] | None = None,
         pipxPkgsList: list[PipPkg] | None = None,
+        npmPkgsList: list[NpmPkg] | None = None,
         sbomsList: list[SbomSpec] | None = None,
         examplesHook: typing.Callable | None = None,
+        virtenv: str | None = None,
 ):
     """ #+begin_org
 ** [[elisp:(org-cycle)][| *DocStr | ]
@@ -456,8 +583,11 @@ def setup(
     pkgsSeedInfo.aptPkgsList  = aptPkgsList
     pkgsSeedInfo.pipPkgsList  = pipPkgsList
     pkgsSeedInfo.pipxPkgsList  = pipxPkgsList
+    pkgsSeedInfo.npmPkgsList   = npmPkgsList
     pkgsSeedInfo.sbomsList  = sbomsList
     pkgsSeedInfo.examplesHook  = examplesHook
+    if virtenv is not None:
+        pkgsSeedInfo.virtenv  = virtenv
 
 
 ####+BEGIN: b:py3:cs:func/typing :funcName "plantWithWhich" :funcType "extTyped" :comment "expects seedSbom.cs" :deco "track"

@@ -1,0 +1,50 @@
+#+title: RepoNameComesHere --- Work Plan
+#+DATE: <2026-06-10 Wed 13:54>
+#+AUTHOR: Mohsen BANAN
+#+OPTIONS: toc:4
+#+TAGS: me(m) ai(a)
+
+This Work Plan file drives the AI collaborative development.
+Interactions are broken down into "Stages". Each Stage has a set
+of TODOs that I work with Claude to accomplish.
+
+Companion docs: [[file:AI-AGENTS.org][AI-AGENTS.org]] (agent guidance / layering), [[file:README.org][README.org]] (overview).
+
+* Stage 1 TODOs
+** +
+** DONE [#A] <<pyVenv>> We want to add the optional specification of a virtenv to -sbom.pcs :ai:
+CLOSED: [2026-06-26 Fri 10:58] SCHEDULED: <2026-06-26 Fri>
+We will use /bisos/asc/web/bin/airflow-sbom.pcs as an example.
+The virtenv specification will have the form of pkgsSeed.pkgsSeedInfo.virtenv = "/bisos/venv/py3/asc"
+We want to add to pkgsSeed.pkgsSeedInfo virtenv defaulting to None.
+When None, the python and pip are taken from the PATH. When not None, the specified virtenv is
+used for all the pip installs.
+----- AI Results: ------
+*** py3/bisos/sbom/pkgsSeed.py -- PkgsSeedInfo
+- Added a =virtenv= attribute (defaults to =None=) in =__init__=, with a matching
+  =@property= / setter pair following the existing pattern.
+- Added a =pipCmnd()= helper: returns ="pip"= when =virtenv is None= (taken from PATH),
+  else =f"{self.virtenv}/bin/pip"=.
+- Threaded an optional =virtenv= kwarg through =setup()= (only overrides when not =None=,
+  so attribute-style assignment still wins if =setup= is called without it).
+*** py3/bisos/sbom/sbom_csu.py -- pip command bodies
+- =pipPkg_isInstalled=: =pip list= -> ={pipCmnd} list=.
+- =pipPkgs_update=: =pip install {each}= -> ={pipCmnd} install {each}=.
+*** Usage (as in the airflow-sbom.pcs example)
+: pkgsSeed.pkgsSeedInfo.virtenv = "/bisos/venv/py3/asc"
+or =pkgsSeed.setup(..., virtenv="/bisos/venv/py3/asc")=.
+*** Verification
+- pyflakes clean (only pre-existing, unrelated warnings).
+- Resolution confirmed: =None= -> =pip=; set -> =/bisos/venv/py3/asc/bin/pip=;
+  =setup(virtenv=...)= -> =/bisos/venv/py3/other/bin/pip=.
+- Planted example menu runs (exit 0); =pipPkg_isInstalled bisos.marmee= returns =True=.
+- pipx commands left untouched; no =bisos.b= venv helper used (per guidance).
+** -
+
+A Stage is typically expressed as a set of TODO lists
+and well defines goals.
+
+# Local Variables:
+# eval: (setq-local toc-org-max-depth 4)
+# eval: (setq-local org-log-done 'time)
+# End:

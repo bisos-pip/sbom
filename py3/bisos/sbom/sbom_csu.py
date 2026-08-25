@@ -111,6 +111,7 @@ def examples_csu(
     aptPkgsNames = pkgsSeed.pkgsSeedInfo.aptPkgsNames()
     pipPkgsNames = pkgsSeed.pkgsSeedInfo.pipPkgsNames()
     pipxPkgsNames = pkgsSeed.pkgsSeedInfo.pipxPkgsNames()
+    npmPkgsNames = pkgsSeed.pkgsSeedInfo.npmPkgsNames()
 
     if len(aptPkgsNames) != 0:
         cs.examples.menuChapter(f'=APT Sbom Packages {aptPkgsNames}=')
@@ -123,6 +124,11 @@ def examples_csu(
         cmnd('aptPkgs_update', args=f"{' '.join(aptPkgsNames)}", comment=f" # List specified aptPkgs")
 
     if len(pipPkgsNames) != 0:
+        virtenv = pkgsSeed.pkgsSeedInfo.virtenv
+        if virtenv is None:
+            cs.examples.menuSection(f'=virtenv: None -- pip taken from PATH=')
+        else:
+            cs.examples.menuSection(f'=virtenv: {virtenv} -- pip = {pkgsSeed.pkgsSeedInfo.pipCmnd()}=')
         cs.examples.menuChapter(f'=PIP Sbom Packages {pipPkgsNames}=')
 
         cmnd('pipPkgs_list', comment=f" # List specified pipPkgs")
@@ -153,7 +159,17 @@ def examples_csu(
         cmnd('sbomSpecs_fullUpdate', args="all", comment=f" # Process all sbomSpecs")
         cmnd('sbomSpecs_fullUpdate', args=f"{' '.join(sbomSpecsNames)}", comment=f" # Process specified sbomSpecs")
 
-    cs.examples.menuChapter(f'=Full Update -- Apt, Pip, Pipx and Sboms=')
+    if len(npmPkgsNames) != 0:
+        cs.examples.menuChapter(f'=NPM Sbom Packages {npmPkgsNames}=')
+
+        cmnd('npmPkgs_list', comment=f" # List specified npmPkgs")
+
+        cmnd('npmPkg_isInstalled', args=f"{npmPkgsNames[0]}", comment=f" # Is the specified npmPkg installed")
+
+        cmnd('npmPkgs_update', args="all", comment=f" # Install or Update spec npmPkgs")
+        cmnd('npmPkgs_update', args=f"{' '.join(npmPkgsNames)}", comment=f" # List specified npmPkgs")
+
+    cs.examples.menuChapter(f'=Full Update -- Apt, Pip, Pipx, Npm and Sboms=')
 
     cmnd('sbom_fullUpdate', comment=f" # Apt, Pip, Pipx and Sboms")
 
@@ -207,6 +223,9 @@ class sbom_fullUpdate(cs.Cmnd):
                                   ).isProblematic():
             return(b_io.eh.badOutcome(cmndOutcome))
         if pipxPkgs_update().pyCmnd(cmndOutcome=cmndOutcome, argsList=["all"]
+                                  ).isProblematic():
+            return(b_io.eh.badOutcome(cmndOutcome))
+        if npmPkgs_update().pyCmnd(cmndOutcome=cmndOutcome, argsList=["all"]
                                   ).isProblematic():
             return(b_io.eh.badOutcome(cmndOutcome))
         if sbomSpecs_fullUpdate().pyCmnd(cmndOutcome=cmndOutcome, argsList=["all"]
@@ -483,8 +502,10 @@ class pipPkg_isInstalled(cs.Cmnd):
 
         pkgName = self.cmndArgsGet("0&1", cmndArgsSpecDict, argsList)
 
+        pipCmnd = pkgsSeed.pkgsSeedInfo.pipCmnd()
+
         if b.subProc.WOpW(invedBy=self, log=0).bash(
-               f"""pip list""",
+               f"""{pipCmnd} list""",
         ).isProblematic(): return(b_io.eh.badOutcome(cmndOutcome))
 
         if cmndOutcome.stdout.find(f'{pkgName[0]}') == -1:
@@ -558,7 +579,7 @@ class pipPkgs_update(cs.Cmnd):
                     continue
                 if pipPkg.func is None:
                     if b.subProc.WOpW(invedBy=self, log=1).bash(
-                            f'''pip install {each}''',
+                            f'''{pkgsSeed.pkgsSeedInfo.pipCmnd()} install {each}''',
                     ).isProblematic():
                         b_io.eh.problem_usageError(f"{each}")
                 else:
@@ -769,6 +790,180 @@ class pipxPkgs_update(cs.Cmnd):
 *  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  /Section/    [[elisp:(outline-show-subtree+toggle)][||]] *CS-Commands --- SBOM Specs*  [[elisp:(org-cycle)][| ]]
 #+end_org """
 ####+END:
+
+
+####+BEGIN: bx:icm:py3:section :title "CS-Commands --- Npm Packages"
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  /Section/    [[elisp:(outline-show-subtree+toggle)][||]] *CS-Commands --- Npm Packages*  [[elisp:(org-cycle)][| ]]
+#+end_org """
+####+END:
+
+####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "npmPkgs_list" :comment "" :extent "verify" :ro "cli" :parsMand "" :parsOpt "" :argsMin 0 :argsMax 0 :pyInv ""
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<npmPkgs_list>>  =verify= ro=cli   [[elisp:(org-cycle)][| ]]
+#+end_org """
+class npmPkgs_list(cs.Cmnd):
+    cmndParamsMandatory = [ ]
+    cmndParamsOptional = [ ]
+    cmndArgsLen = {'Min': 0, 'Max': 0,}
+
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmnd(self,
+             rtInv: cs.RtInvoker,
+             cmndOutcome: b.op.Outcome,
+    ) -> b.op.Outcome:
+
+        failed = b_io.eh.badOutcome
+        callParamsDict = {}
+        if self.invocationValidate(rtInv, cmndOutcome, callParamsDict, None).isProblematic():
+            return failed(cmndOutcome)
+####+END:
+        if self.cmndDocStr(f""" #+begin_org
+** [[elisp:(org-cycle)][| *CmndDesc:* | ]]  List specified npmPkgs.
+        #+end_org """): return(cmndOutcome)
+
+        if pkgsSeed.pkgsSeedInfo.npmPkgsList is not None:
+            for eachPkg in pkgsSeed.pkgsSeedInfo.npmPkgsList:
+                pass
+        else:
+            print("Empty Npm Pkgs List")
+
+        return cmndOutcome.set(opResults=pkgsSeed.pkgsSeedInfo.npmPkgsNames())
+
+
+####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "npmPkg_isInstalled" :comment "" :extent "verify" :ro "cli" :parsMand "" :parsOpt "" :argsMin 1 :argsMax 1 :pyInv ""
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<npmPkg_isInstalled>>  =verify= argsMin=1 argsMax=1 ro=cli   [[elisp:(org-cycle)][| ]]
+#+end_org """
+class npmPkg_isInstalled(cs.Cmnd):
+    cmndParamsMandatory = [ ]
+    cmndParamsOptional = [ ]
+    cmndArgsLen = {'Min': 1, 'Max': 1,}
+
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmnd(self,
+             rtInv: cs.RtInvoker,
+             cmndOutcome: b.op.Outcome,
+             argsList: typing.Optional[list[str]]=None,  # CsArgs
+    ) -> b.op.Outcome:
+
+        failed = b_io.eh.badOutcome
+        callParamsDict = {}
+        if self.invocationValidate(rtInv, cmndOutcome, callParamsDict, argsList).isProblematic():
+            return failed(cmndOutcome)
+        cmndArgsSpecDict = self.cmndArgsSpec()
+####+END:
+        if self.cmndDocStr(f""" #+begin_org
+** [[elisp:(org-cycle)][| *CmndDesc:* | ]]  Check whether an npm package is installed (global or local).
+        #+end_org """): return(cmndOutcome)
+
+        pkgName = self.cmndArgsGet("0&1", cmndArgsSpecDict, argsList)
+
+        npmPkg = pkgsSeed.pkgsSeedInfo.namedNpmPkg(pkgName[0])
+        scope_flag = "--global" if (npmPkg is None or npmPkg.scope == "global") else ""
+
+        if b.subProc.WOpW(invedBy=self, log=0).bash(
+               f"""npm list {scope_flag} {pkgName[0]} 2>/dev/null""",
+        ).isProblematic():
+            return cmndOutcome.set(opResults=False)
+
+        result = pkgName[0] in cmndOutcome.stdout
+
+        return cmndOutcome.set(opResults=result)
+
+####+BEGIN: b:py3:cs:method/args :methodName "cmndArgsSpec" :methodType "anyOrNone" :retType "bool" :deco "default" :argsList "self"
+    """ #+begin_org
+**  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  Mtd-T-anyOrNone [[elisp:(outline-show-subtree+toggle)][||]] /cmndArgsSpec/ deco=default  deco=default  [[elisp:(org-cycle)][| ]]
+    #+end_org """
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmndArgsSpec(self, ):
+####+END:
+        """
+***** Cmnd Args Specification
+"""
+        cmndArgsSpecDict = cs.CmndArgsSpecDict()
+        cmndArgsSpecDict.argsDictAdd(
+            argPosition="0&1",
+            argName="pkgName",
+            argDefault='',
+            argChoices=[],
+            argDescription="One argument, any string as a pkgName"
+        )
+        return cmndArgsSpecDict
+
+
+####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "npmPkgs_update" :comment "" :extent "verify" :ro "cli" :parsMand "" :parsOpt "" :argsMin 1 :argsMax 9999 :pyInv ""
+""" #+begin_org
+*  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<npmPkgs_update>>  =verify= argsMin=1 argsMax=9999 ro=cli   [[elisp:(org-cycle)][| ]]
+#+end_org """
+class npmPkgs_update(cs.Cmnd):
+    cmndParamsMandatory = [ ]
+    cmndParamsOptional = [ ]
+    cmndArgsLen = {'Min': 1, 'Max': 9999,}
+
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmnd(self,
+             rtInv: cs.RtInvoker,
+             cmndOutcome: b.op.Outcome,
+             argsList: typing.Optional[list[str]]=None,  # CsArgs
+    ) -> b.op.Outcome:
+
+        failed = b_io.eh.badOutcome
+        callParamsDict = {}
+        if self.invocationValidate(rtInv, cmndOutcome, callParamsDict, argsList).isProblematic():
+            return failed(cmndOutcome)
+        cmndArgsSpecDict = self.cmndArgsSpec()
+####+END:
+        if self.cmndDocStr(f""" #+begin_org
+** [[elisp:(org-cycle)][| *CmndDesc:* | ]]  Install or update specified npm packages.
+        #+end_org """): return(cmndOutcome)
+
+        cmndArgsSpecDict = self.cmndArgsSpec()
+        cmndArgs = self.cmndArgsGet("0&9999", cmndArgsSpecDict, argsList)
+
+        if cmndArgs[0] == "all":
+            cmndArgs = pkgsSeed.pkgsSeedInfo.npmPkgsNames()
+
+        for each in cmndArgs:
+            if npmPkg_isInstalled().pyCmnd(cmndOutcome=cmndOutcome, argsList=[f"{each}"]).results:
+                print(f"{each} NPM Package is already installed -- skipped")
+                continue
+            else:
+                npmPkg = pkgsSeed.pkgsSeedInfo.namedNpmPkg(each)
+                if npmPkg is None:
+                    b_io.eh.problem_usageError(f"{each}")
+                    continue
+                if npmPkg.func is None:
+                    scope_flag = "--global" if npmPkg.scope == "global" else ""
+                    pkg_spec = f"{each}@{npmPkg.ver}" if npmPkg.ver else each
+                    if b.subProc.WOpW(invedBy=self, log=1).bash(
+                            f"""npm install {scope_flag} {pkg_spec}""",
+                    ).isProblematic():
+                        b_io.eh.problem_usageError(f"{each}")
+                else:
+                    npmPkg.func()
+
+        return(cmndOutcome.set(opResults=None))
+
+####+BEGIN: b:py3:cs:method/args :methodName "cmndArgsSpec" :methodType "anyOrNone" :retType "bool" :deco "default" :argsList "self"
+    """ #+begin_org
+**  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  Mtd-T-anyOrNone [[elisp:(outline-show-subtree+toggle)][||]] /cmndArgsSpec/ deco=default  deco=default  [[elisp:(org-cycle)][| ]]
+    #+end_org """
+    @cs.track(fnLoc=True, fnEntry=True, fnExit=True)
+    def cmndArgsSpec(self, ):
+####+END:
+        """
+***** Cmnd Args Specification
+"""
+        cmndArgsSpecDict = cs.CmndArgsSpecDict()
+        cmndArgsSpecDict.argsDictAdd(
+            argPosition="0&9999",
+            argName="cmndArgs",
+            argDefault='',
+            argChoices=[],
+            argDescription="List of npmPkgNames or 'all'"
+        )
+        return cmndArgsSpecDict
 
 ####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "sbomSpecs_list" :comment "" :extent "verify" :ro "cli" :parsMand "" :parsOpt "" :argsMin 0 :argsMax 0 :pyInv ""
 """ #+begin_org
