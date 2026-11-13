@@ -798,7 +798,18 @@ class pipxPkgs_update(cs.Cmnd):
 #+end_org """
 ####+END:
 
-####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "npmPkgs_list" :comment "" :extent "verify" :ro "cli" :parsMand "" :parsOpt "" :argsMin 0 :argsMax 0 :pyInv ""
+# Prepended to every npm command: the shells that run them are non-interactive and never read ~/.bashrc,
+# so load the user's nvm (nvm-sbom.pcs's rule: NVM_DIR, else $XDG_CONFIG_HOME/nvm, else ~/.nvm) and its
+# default Node. Without nvm, npm stays the system one.
+nvmLoadPrelude = """
+if [ -z "${NVM_DIR}" ]; then
+    if [ -n "${XDG_CONFIG_HOME}" ]; then NVM_DIR="${XDG_CONFIG_HOME}/nvm"; else NVM_DIR="${HOME}/.nvm"; fi
+fi
+export NVM_DIR
+if [ -s "$NVM_DIR/nvm.sh" ]; then . "$NVM_DIR/nvm.sh"; nvm use default >/dev/null 2>&1; fi
+"""
+
+####+BEGIN: b:py3:cs:cmnd/classHead :cmndName "npmPkgs_list":comment "" :extent "verify" :ro "cli" :parsMand "" :parsOpt "" :argsMin 0 :argsMax 0 :pyInv ""
 """ #+begin_org
 *  _[[elisp:(blee:menu-sel:outline:popupMenu)][±]]_ _[[elisp:(blee:menu-sel:navigation:popupMenu)][Ξ]]_ [[elisp:(outline-show-branches+toggle)][|=]] [[elisp:(bx:orgm:indirectBufOther)][|>]] *[[elisp:(blee:ppmm:org-mode-toggle)][|N]]*  CmndSvc-   [[elisp:(outline-show-subtree+toggle)][||]] <<npmPkgs_list>>  =verify= ro=cli   [[elisp:(org-cycle)][| ]]
 #+end_org """
@@ -863,7 +874,7 @@ class npmPkg_isInstalled(cs.Cmnd):
         scope_flag = "--global" if (npmPkg is None or npmPkg.scope == "global") else ""
 
         if b.subProc.WOpW(invedBy=self, log=0).bash(
-               f"""npm list {scope_flag} {pkgName[0]} 2>/dev/null""",
+               nvmLoadPrelude + f"""npm list {scope_flag} {pkgName[0]} 2>/dev/null""",
         ).isProblematic():
             return cmndOutcome.set(opResults=False)
 
@@ -937,7 +948,7 @@ class npmPkgs_update(cs.Cmnd):
                     scope_flag = "--global" if npmPkg.scope == "global" else ""
                     pkg_spec = f"{each}@{npmPkg.ver}" if npmPkg.ver else each
                     if b.subProc.WOpW(invedBy=self, log=1).bash(
-                            f"""npm install {scope_flag} {pkg_spec}""",
+                            nvmLoadPrelude + f"""npm install {scope_flag} {pkg_spec}""",
                     ).isProblematic():
                         b_io.eh.problem_usageError(f"{each}")
                 else:

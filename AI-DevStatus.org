@@ -210,6 +210,16 @@ in order. This is the standard way to express prerequisites.
 | =nvm-sbom.pcs= run as non-root user           | ☐ Not tested |
 | AI-WorkPlan.org Stage 2 entry written         | ☐ TODO       |
 
+2026-11-13 (uncommitted; recorded in bisos-pip/capability's AI-WorkPlan.org 4.3, pointer not a copy):
+=sbom_csu.py= prepends =nvmLoadPrelude= to =npm list= (=npmPkg_isInstalled=) and =npm install=
+(=npmPkgs_update=): those shells are non-interactive and never read =~/.bashrc=, so the user's nvm
+(=NVM_DIR=, else =$XDG_CONFIG_HOME/nvm=, else =~/.nvm=) and its default Node are loaded; without nvm,
+the system npm as before. Tested: =reactPlus-sbom.pcs= installs its globals into nvm's Node, no EACCES
+(the "Not tested" rows above for =nvm-sbom.pcs= and a live =sbom_fullUpdate= are now tested). Open:
+=sbom_fullUpdate= runs =sbomsList= after apt, pip, pipx and npm, so a prerequisite sbom (reactPlus's
+=nvm-sbom.pcs=) runs after the packages that need it --- the user's decision. README.org still describes
+bisos.facter (a template left over), not bisos.sbom.
+
 * Next Steps
 
 1. *Live test* =nvm-sbom.pcs -i sbom_fullUpdate= as a non-root user to confirm nvm installs and activates correctly.
