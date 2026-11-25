@@ -873,8 +873,11 @@ class npmPkg_isInstalled(cs.Cmnd):
         npmPkg = pkgsSeed.pkgsSeedInfo.namedNpmPkg(pkgName[0])
         scope_flag = "--global" if (npmPkg is None or npmPkg.scope == "global") else ""
 
+        # npm list exits 1 when the package is absent: that is an answer, not a failure, so its exit
+        # status is dropped (|| true) and its stdout decides. Else the error stays in the caller's
+        # shared outcome and fails the whole sbom_fullUpdate (bxGenesis/base 3.2.4).
         if b.subProc.WOpW(invedBy=self, log=0).bash(
-               nvmLoadPrelude + f"""npm list {scope_flag} {pkgName[0]} 2>/dev/null""",
+               nvmLoadPrelude + f"""npm list {scope_flag} {pkgName[0]} 2>/dev/null || true""",
         ).isProblematic():
             return cmndOutcome.set(opResults=False)
 
@@ -936,23 +939,25 @@ class npmPkgs_update(cs.Cmnd):
             cmndArgs = pkgsSeed.pkgsSeedInfo.npmPkgsNames()
 
         for each in cmndArgs:
+            npmPkg = pkgsSeed.pkgsSeedInfo.namedNpmPkg(each)
+            if npmPkg is not None and npmPkg.func is not None:
+                # Its own install decides what "installed" means (e.g. revealJs-sbom.pcs: /usr/local,
+                # the system npm), so the nvm-based check below does not apply.
+                npmPkg.func()
+                continue
             if npmPkg_isInstalled().pyCmnd(cmndOutcome=cmndOutcome, argsList=[f"{each}"]).results:
                 print(f"{each} NPM Package is already installed -- skipped")
                 continue
             else:
-                npmPkg = pkgsSeed.pkgsSeedInfo.namedNpmPkg(each)
                 if npmPkg is None:
                     b_io.eh.problem_usageError(f"{each}")
                     continue
-                if npmPkg.func is None:
-                    scope_flag = "--global" if npmPkg.scope == "global" else ""
-                    pkg_spec = f"{each}@{npmPkg.ver}" if npmPkg.ver else each
-                    if b.subProc.WOpW(invedBy=self, log=1).bash(
-                            nvmLoadPrelude + f"""npm install {scope_flag} {pkg_spec}""",
-                    ).isProblematic():
-                        b_io.eh.problem_usageError(f"{each}")
-                else:
-                    npmPkg.func()
+                scope_flag = "--global" if npmPkg.scope == "global" else ""
+                pkg_spec = f"{each}@{npmPkg.ver}" if npmPkg.ver else each
+                if b.subProc.WOpW(invedBy=self, log=1).bash(
+                        nvmLoadPrelude + f"""npm install {scope_flag} {pkg_spec}""",
+                ).isProblematic():
+                    b_io.eh.problem_usageError(f"{each}")
 
         return(cmndOutcome.set(opResults=None))
 

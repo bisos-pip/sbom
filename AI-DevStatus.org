@@ -188,6 +188,15 @@ Use a plain string literal ="""..."""= to avoid Python SyntaxError
 The official Anthropic Claude Desktop app does not provide a native Linux .deb.
 The community package at =pkg.claude-desktop-debian.dev= provides an unofficial port.
 
+** npm: a package's own install decides; "absent" is not an error (2026-11-25)
+
+From bxGenesis/base AI-WorkPlan 3.2.4 (the 261124-1 VM run): =revealJs-sbom.pcs= (bisos.lcnt) installs
+reveal.js with its own =func= (system =/usr/bin/npm=, =/usr/local=), but =npmPkgs_update= first ran the
+generic =npmPkg_isInstalled= (=npm list --global= under the user's nvm, another prefix): exit 1, left as
+an error in the shared outcome, so =sbom_fullUpdate= failed and skipped its nested sboms. Now, in
+=sbom_csu.py=: a package with a =func= goes to it directly, and =npmPkg_isInstalled= runs
+=npm list ... || true= (its stdout decides). Untested; reaches the VM with the next bisos.sbom release.
+
 ** Inter-sbom dependencies (sbomsList / sbomSpec)
 Declaring =sbomsList= in a -sbom.pcs causes =sbom_fullUpdate= to call
 =sbomSpecs_fullUpdate= first, which runs each listed sbom's =sbom_fullUpdate=
