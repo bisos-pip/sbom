@@ -216,6 +216,10 @@ class sbom_fullUpdate(cs.Cmnd):
 ** [[elisp:(org-cycle)][| *CmndDesc:* | ]]  A starting point command.
         #+end_org """): return(cmndOutcome)
 
+        # The sbomsList first: they are this sbom's prerequisites (e.g. nvm-sbom.pcs before npm packages).
+        if sbomSpecs_fullUpdate().pyCmnd(cmndOutcome=cmndOutcome, argsList=["all"]
+                                  ).isProblematic():
+            return(b_io.eh.badOutcome(cmndOutcome))
         if aptPkgs_update().pyCmnd(cmndOutcome=cmndOutcome, argsList=["all"]
                                   ).isProblematic():
             return(b_io.eh.badOutcome(cmndOutcome))
@@ -226,9 +230,6 @@ class sbom_fullUpdate(cs.Cmnd):
                                   ).isProblematic():
             return(b_io.eh.badOutcome(cmndOutcome))
         if npmPkgs_update().pyCmnd(cmndOutcome=cmndOutcome, argsList=["all"]
-                                  ).isProblematic():
-            return(b_io.eh.badOutcome(cmndOutcome))
-        if sbomSpecs_fullUpdate().pyCmnd(cmndOutcome=cmndOutcome, argsList=["all"]
                                   ).isProblematic():
             return(b_io.eh.badOutcome(cmndOutcome))
 

@@ -42,6 +42,17 @@ or =pkgsSeed.setup(..., virtenv="/bisos/venv/py3/asc")=.
   =setup(virtenv=...)= -> =/bisos/venv/py3/other/bin/pip=.
 - Planted example menu runs (exit 0); =pipPkg_isInstalled bisos.marmee= returns =True=.
 - pipx commands left untouched; no =bisos.b= venv helper used (per guidance).
+** TODO [#A] <<subSbomsFirst>> =sbom_fullUpdate= runs the =sbomsList= first  :aiAndMe:
+The =sbomsList= are a sbom's prerequisites (the intent from the beginning, Mohsen 2026-11-28); it ran
+them last, after apt, pip, pipx and npm, and it returns at the first failure, so a sbom whose own
+packages need a sub-sbom never got it. Found on a box (bisos/raw rebuild AI-WorkPlan =<<3.7>>=):
+=reactPlus-sbom.pcs='s npm globals failed without nvm, and its =nvm-sbom.pcs= never ran.
+----- AI Results: ------
+- 2026-11-28: =sbom_csu.py= =sbom_fullUpdate=: =sbomSpecs_fullUpdate= first, then apt, pip, pipx, npm.
+  The 15 sboms with a =sbomsList= (bisos-pip, bisos/bsip4, bisos-web, bxObjects) were read: 8 also have
+  packages of their own; reactPlus, csPlayerPerf (Django before its libs) and ai-tools (playwright before
+  crawl) gain, the others are independent (lcntCore's =apt-get update= now follows its fonts sub-sbom,
+  which only unzips local files). Compiled; not run. Needs a bisos.sbom release.
 ** -
 
 A Stage is typically expressed as a set of TODO lists
